@@ -1,0 +1,222 @@
+"=========================================================
+" 基本設定 / 互換モード解除
+"=========================================================
+if &compatible
+  set nocompatible
+endif
+
+" このファイル自体のエンコーディング
+scriptencoding utf-8
+
+"=========================================================
+" 日本語・文字コード設定
+"=========================================================
+set encoding=utf-8            " Vim内部のエンコーディング
+set fileencoding=utf-8        " 新規ファイルのデフォルト
+set fileencodings=ucs-bom,utf-8,euc-jp,cp932
+set fileformats=unix,dos,mac  " 改行コード検出
+
+set helplang=ja,en
+if has('multi_lang')
+  silent! language messages ja_JP.utf-8
+endif
+
+" 日本語の曖昧幅文字を2桁扱いにしてレイアウト崩れを防ぐ
+if exists('&ambiwidth')
+  set ambiwidth=double
+endif
+
+"=========================================================
+" 表示・操作性（ターミナル / tmux 前提）
+"=========================================================
+" 行番号
+" set number
+
+" ステータスラインを常時表示
+set laststatus=2
+
+" ステータスライン内容（プラグインに依存しない）
+set statusline=
+set statusline=[%n]                           " バッファ番号
+set statusline+=%{matchstr(hostname(),'\\w\\+')}@
+set statusline+=%<%F                          " ファイルパス
+set statusline+=%m                            " 変更フラグ
+set statusline+=%r                            " 読み取り専用
+set statusline+=%h                            " ヘルプ
+set statusline+=%w                            " プレビュー
+set statusline+=[%{&fileformat}]              " 改行コード
+set statusline+=[%{&fileencoding!=''?&fileencoding:&encoding}]
+set statusline+=%y                            " filetype
+set statusline+=%=                            " ここから右寄せ
+set statusline+=[ASCII=%B]                    " カーソル位置の文字コード
+set statusline+=[C=%c/%{col('$')-1}]          " カラム / 最大カラム
+set statusline+=[L=%l/%L]                     " 行番号 / 全行数
+set statusline+=[%p%%]                        " ファイル内の割合
+
+" カーソル行だけハイライト
+set cursorline
+
+" コマンド・カーソル位置を見やすく
+set showcmd
+set ruler
+
+" スクロールの余白
+set scrolloff=3
+set sidescrolloff=5
+
+" 画面再描画・CursorHold系の反応速度
+set updatetime=300
+
+" tmux との組み合わせで <Esc> 認識を安定させる
+set ttimeout
+set ttimeoutlen=50
+
+" 画面ちらつき防止（古い端末向け。問題なければコメントアウトでOK）
+" set t_vb=
+
+"=========================================================
+" 編集まわり
+"=========================================================
+" バックスペースを直感的に
+set backspace=indent,eol,start
+
+" 隠しバッファを許可（保存前でもバッファ切り替え）
+set hidden
+
+" コマンドライン補完をリッチに
+set wildmenu
+set wildmode=longest:full,full
+
+" マッチング括弧をハイライト
+set showmatch
+
+"=========================================================
+" 検索
+"=========================================================
+set ignorecase      " 小文字検索で大文字もヒット
+set smartcase       " 大文字を含む検索は区別
+set hlsearch        " 検索結果をハイライト
+set incsearch       " インクリメンタルサーチ
+set wrapscan        " ファイル末尾まで行ったら先頭に戻る
+
+" 検索ハイライト解除用のショートカット
+nnoremap <Esc><Esc> :nohlsearch<CR>
+
+"=========================================================
+" インデント・タブ
+"=========================================================
+set expandtab       " Tab を空白に展開（デフォルト）
+set shiftwidth=4    " 自動インデントの幅
+set tabstop=4       " タブ幅
+set softtabstop=4   " <Tab>入力時の見かけの幅
+
+set autoindent
+set smartindent
+
+"=========================================================
+" カラー・ハイライト
+"=========================================================
+if has('termguicolors')
+  set termguicolors
+endif
+
+set background=dark
+" 組み込み colorscheme を使い、Nerd Font 前提のテーマは避ける
+silent! colorscheme desert
+
+" vimdiff の色調整（組み込み Diff ハイライト上書き）
+hi DiffAdd    ctermfg=black ctermbg=2
+hi DiffChange ctermfg=black ctermbg=3
+hi DiffDelete ctermfg=black ctermbg=6
+hi DiffText   ctermfg=black ctermbg=7
+
+"=========================================================
+" マウス・クリップボード
+"=========================================================
+if has('mouse')
+  set mouse=a      " すべてのモードでマウス有効
+endif
+
+" 端末クリップボードと連携（+clipboard ビルド前提）
+if has('clipboard')
+  set clipboard+=unnamedplus
+endif
+
+"=========================================================
+" grep
+"=========================================================
+" 外部コマンドがあれば使う（無くてもエラーにはならない）
+if executable('jvgrep')
+  set grepprg=jvgrep
+endif
+
+"=========================================================
+" filetype / syntax
+"=========================================================
+filetype plugin indent on
+syntax enable
+
+"=========================================================
+" 言語別・用途別の細かい設定
+"=========================================================
+augroup my_filetypes
+  autocmd!
+  " Markdown 拡張子を markdown として扱う
+  autocmd BufNewFile,BufRead *.{md,mdwn,mkd,mkdn,mark*} setlocal filetype=markdown
+
+  " Markdown の italic 表示を LineNr と同じにして見やすく
+  autocmd FileType markdown highlight! default link markdownItalic LineNr
+
+  " YAML 系は 2 スペースインデント & fold 設定
+  autocmd FileType yaml,yml,yaml.ansible setlocal shiftwidth=2 tabstop=2 softtabstop=2 expandtab
+  autocmd BufNewFile,BufReadPost *.{yml,yaml,yml.liquid} setlocal foldmethod=indent nofoldenable
+
+  " Go: タブインデント（プラグイン無し版 gofmt 前提）
+  autocmd FileType go setlocal noexpandtab shiftwidth=4 tabstop=4 softtabstop=4
+
+  " Python: 4 スペースインデント
+  autocmd FileType python setlocal expandtab shiftwidth=4 tabstop=4 softtabstop=4
+augroup END
+
+"=========================================================
+" キーマップ (Leader キーなど) - すべて内蔵機能のみ
+"=========================================================
+let mapleader = " "         " <Space> を Leader に
+
+" 基本操作
+nnoremap <leader>w :write<CR>
+nnoremap <leader>q :quit<CR>
+nnoremap <leader>x :xit<CR>
+nnoremap <leader>Q :qall<CR>
+
+" バッファ操作
+nnoremap <leader>bn :bnext<CR>
+nnoremap <leader>bp :bprevious<CR>
+nnoremap <leader>bd :bdelete<CR>
+
+" ウィンドウ操作
+nnoremap <leader>sv :vsplit<CR>
+nnoremap <leader>sh :split<CR>
+nnoremap <leader>sc <C-w>c
+nnoremap <leader>so <C-w>o
+
+" 行末の余分な空白削除（手動トリム）
+nnoremap <leader>tw :%s/\s\+$//e<CR>
+
+" Paste モードの ON/OFF（tmux 経由のペーストが崩れる場合に利用）
+set pastetoggle=<F2>
+
+"=========================================================
+" その他 ちょっとした品質向上
+"=========================================================
+" スワップファイルは作るが、気になる場合は下を有効化
+" set noswapfile
+
+" 永続 undo (ディレクトリがあれば)
+if has('persistent_undo')
+  if !isdirectory(expand('~/.vim/undo'))
+    call mkdir(expand('~/.vim/undo'), 'p')
+  endif
+  set undofile
+  set undodir=~/.vim/undo
+endif
