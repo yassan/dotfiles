@@ -30,11 +30,11 @@ Plug 'junegunn/fzf', { 'do': { -> fzf#install() } }   " FZF 本体 (バイナリ
 Plug 'junegunn/fzf.vim'          " :Files, :GFiles, :Buffers などの FZF 連携
 
 " --- Lint, LSP, フォーマット (共通) ---
-Plug 'dense-analysis/ale'        " 非同期 Lint + LSP クライアント :contentReference[oaicite:0]{index=0}
+Plug 'dense-analysis/ale'        " 非同期 Lint + LSP クライアント
 
 " --- 言語別強化 ---
-Plug 'fatih/vim-go'              " Go 開発用 (gofmt, :GoTest 等) :contentReference[oaicite:1]{index=1}
-Plug 'preservim/vim-markdown'    " Markdown 強化 (見出しや折り畳みなど) :contentReference[oaicite:2]{index=2}
+Plug 'fatih/vim-go'              " Go 開発用 (gofmt, :GoTest 等)
+Plug 'preservim/vim-markdown'    " Markdown 強化 (見出しや折り畳みなど)
 Plug 'godlygeek/tabular'         " Markdown などで表をきれいに揃える
 
 call plug#end()
