@@ -1,562 +1,262 @@
-"dein Scripts-----------------------------
-"complete.vim
+"=========================================================
+" 前提: vim-plug を使ったプラグイン管理
+"---------------------------------------------------------
+" まだ入れていなければ、シェルで以下を一度だけ実行:
+" curl -fLo ~/.vim/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+"=========================================================
+
 if &compatible
-  set nocompatible               " Be iMproved
+  set nocompatible
 endif
 
-" Required:
-set runtimepath+=$HOME/.cache/dein/repos/github.com/Shougo/dein.vim
+" このファイル自体のエンコーディング
+scriptencoding utf-8
 
-" Required:
-if dein#load_state('$HOME/.cache/dein')
-  call dein#begin('$HOME/.cache/dein')
+"=========================================================
+" プラグイン定義 (vim-plug)
+"=========================================================
+call plug#begin('~/.vim/plugged')
 
-  " Let dein manage dein
-  " Required:
-  call dein#add('$HOME/.cache/dein/repos/github.com/Shougo/dein.vim')
+" --- 基本ユーティリティ ---
+Plug 'tpope/vim-surround'        " 囲み文字操作 ((), {}, "", など)
+Plug 'tpope/vim-commentary'      " gcc / gc{motion} でコメントトグル
 
-  " Add or remove your plugins here:
-  call dein#add('Shougo/neosnippet.vim')
-  call dein#add('Shougo/neosnippet-snippets')
+" --- Git 連携 ---
+Plug 'tpope/vim-fugitive'        " :Git, :Gdiff など Git 操作用
 
-  " You can specify revision/branch/tag.
-  call dein#add('Shougo/vimshell', { 'rev': '3787e5' })
+" --- ファイルツリー / ファイル検索 ---
+Plug 'preservim/nerdtree'        " 左サイドのファイルツリー
+Plug 'junegunn/fzf', { 'do': { -> fzf#install() } }   " FZF 本体 (バイナリも自動導入)
+Plug 'junegunn/fzf.vim'          " :Files, :GFiles, :Buffers などの FZF 連携
 
-  " ファイルツリー表示
-  call dein#add('scrooloose/nerdtree')
+" --- Lint, LSP, フォーマット (共通) ---
+Plug 'dense-analysis/ale'        " 非同期 Lint + LSP クライアント :contentReference[oaicite:0]{index=0}
 
-  " 入力補完 
-  call dein#add('Shougo/neocomplete.vim')
+" --- 言語別強化 ---
+Plug 'fatih/vim-go'              " Go 開発用 (gofmt, :GoTest 等) :contentReference[oaicite:1]{index=1}
+Plug 'preservim/vim-markdown'    " Markdown 強化 (見出しや折り畳みなど) :contentReference[oaicite:2]{index=2}
+Plug 'godlygeek/tabular'         " Markdown などで表をきれいに揃える
 
-  " GitのVim-wrapper
-  call dein#add('tpope/vim-fugitive')
-  
-  " 多機能セレクタ https://github.com/ctrlpvim/ctrlp.vim
-  "call dein#add('ctrlpvim/ctrlp.vim'
-  
-  " 色付け
-  call dein#add('flazz/vim-colorschemes')
-  call dein#add('altercation/vim-colors-solarized')
-  
-  " 文法チェック
-  call dein#add('scrooloose/syntastic.git')
-  
-  " vimdiffの比較アルゴリズムの変更
-  call dein#add('lambdalisue/vim-unified-diff')
-  
-  " ヘルプの日本語
-  call dein#add('vim-jp/vimdoc-ja')
-  
-  " インデントの可視化
-  call dein#add('nathanaelkane/vim-indent-guides')
-  
-  " モジュール名で Shift+k でPODが開く
-  call dein#add('hotchpotch/perldoc-vim')
+call plug#end()
 
-  " Perlのシンタックス
-  call dein#add('vim-perl/vim-perl', { 'for': 'perl', 'do': 'make clean carp dancer highlight-all-pragmas moose test-more try-tiny' })  
+"=========================================================
+" 日本語・文字コード設定
+"=========================================================
+set encoding=utf-8            " Vim内部のエンコーディング
+set fileencoding=utf-8        " 新規ファイルのデフォルト
+set fileencodings=ucs-bom,utf-8,euc-jp,cp932
+set fileformats=unix,dos,mac  " 改行コード検出
 
-  " シンタックスチェック
-  call dein#add('scrooloose/syntastic')
-
-  " perlの入力補完
-  call dein#add('c9s/perlomni.vim')
-
-  " ctagの作成
-  call dein#add('soramugi/auto-ctags.vim')
-
-  " color scheme
-  call dein#add('vim-scripts/Zenburn')
-
-  " Required:
-  call dein#end()
-  call dein#save_state()
+set helplang=ja,en
+if has('multi_lang')
+  silent! language messages ja_JP.utf-8
 endif
 
-" Required:
-filetype plugin indent on
-syntax enable
+" 日本語の曖昧幅文字を2桁扱いにしてレイアウト崩れを防ぐ
+set ambiwidth=double
 
-" If you want to install not installed plugins on startup.
-if dein#check_install()
-  call dein#install()
-endif
+"=========================================================
+" 表示・操作性
+"=========================================================
+" 行番号
+set number
 
-"End dein Scripts-------------------------
-"
-if executable('jvgrep')
-  set grepprg=jvgrep
+" ステータスラインを常時表示
+set laststatus=2
+
+" ステータスライン内容（プラグインに依存しない）
+set statusline=
+set statusline=[%n]                           " バッファ番号
+set statusline+=%{matchstr(hostname(),'\\w\\+')}@
+set statusline+=%<%F                          " ファイルパス
+set statusline+=%m                            " 変更フラグ
+set statusline+=%r                            " 読み取り専用
+set statusline+=%h                            " ヘルプ
+set statusline+=%w                            " プレビュー
+set statusline+=[%{&fileformat}]              " 改行コード
+set statusline+=[%{&fileencoding!=''?&fileencoding:&encoding}]
+set statusline+=%y                            " filetype
+set statusline+=%=                            " ここから右寄せ
+set statusline+=[ASCII=%B]                    " カーソル位置の文字コード
+set statusline+=[C=%c/%{col('$')-1}]          " カラム / 最大カラム
+set statusline+=[L=%l/%L]                     " 行番号 / 全行数
+set statusline+=[%p%%]                        " ファイル内の割合
+
+" カーソル行だけハイライト
+set cursorline
+
+" コマンド・カーソル位置を見やすく
+set showcmd
+set ruler
+
+" スクロールの余白
+set scrolloff=3
+set sidescrolloff=5
+
+" 反応速度 (CursorHold, ALE などに影響)
+set updatetime=300
+
+"=========================================================
+" 検索
+"=========================================================
+set ignorecase      " 小文字検索で大文字もヒット
+set smartcase       " 大文字を含む検索は区別
+set hlsearch        " 検索結果をハイライト
+set incsearch       " インクリメンタルサーチ
+
+"=========================================================
+" インデント・タブ
+"=========================================================
+set expandtab       " Tab を空白に展開
+set shiftwidth=4    " 自動インデントの幅
+set tabstop=4       " タブ幅
+set softtabstop=4   " <Tab>入力時の見かけの幅
+
+set autoindent
+set smartindent
+
+" 言語別のインデントは必要に応じて ftplugin 側に任せる
+
+"=========================================================
+" カラー・ハイライト
+"=========================================================
+if has('termguicolors')
+  set termguicolors
 endif
 
 set background=dark
-colorscheme zenburn
-" colorscheme solarized
+" 組み込み colorscheme を使い、Nerd Font 前提のテーマは避ける
+silent! colorscheme desert
 
-" 表示設定 ###############################
-" East_Asian_Width 特性の Ambiguous（曖昧)（文脈によって文字幅が異なる文字）
-" については文字幅を2倍にする
-" →日本語の場合に文字幅を2倍にして表示してつぶれるのを防ぐ
-set ambiwidth=double
-" タブ入力を複数の空白入力に置き換える
-set expandtab
-" 自動的に挿入されるときの幅('sw')
-set shiftwidth=4
-" タブを表示するときの幅('ts')
-set tabstop=4
-"キーボードで<Tab>キーを押した時に挿入される空白の量。
-"'softtabstop'が0以外の時には、例え'ts'を4に設定していても、<Tab>を1度押しても's
-"ofttabstop'分だけ空白を挿入。
-"逆に'softtabstop'が0の場合には挿入されるのは'ts'で指定した量になります。
-set softtabstop=4
-" タブを挿入するときの幅('st')
-" set shiftwidth=4
-
-" 改行時に前の行のインデントを継続する
-set autoindent
-" 改行時に入力された行の末尾に合わせて次の行のインデントを増減する
-set smartindent
-
-" カレント行に横線を表示
-set cursorline
-set cursorcolumn
-" ステータスバー##########################
-" ステータスバーを常時表示
-set laststatus=2
-"ファイルナンバー表示
-set statusline=[%n]
-"ホスト名表示
-set statusline+=%{matchstr(hostname(),'\\w\\+')}@
-"ファイル名表示
-set statusline+=%<%F
-"変更のチェック表示
-set statusline+=%m
-"読み込み専用かどうか表示
-set statusline+=%r
-"ヘルプページなら[HELP]と表示
-set statusline+=%h
-"プレビューウインドウなら[Prevew]と表示
-set statusline+=%w
-"ファイルフォーマット表示
-set statusline+=[%{&fileformat}]
-"文字コード表示
-set statusline+=[%{has('multi_byte')&&\&fileencoding!=''?&fileencoding:&encoding}]
-"ファイルタイプ表示
-set statusline+=%y
-"ここからツールバー右側
-set statusline+=%=
-"文字バイト数/カラム番号
-set statusline+=[ASCII=%B]
-"現在文字列/全体列表示
-set statusline+=[C=%c/%{col('$')-1}]
-"現在文字行/全体行表示
-set statusline+=[L=%l/%L]
-"現在行が全体行の何%目か表示
-set statusline+=[%p%%]
-" Gitのbranch名を表示
-set statusline+=[%{fugitive#statusline()}]
-
-" for Syntastic 
-set statusline+=%#warningmsg#
-set statusline+=%{SyntasticStatuslineFlag()}
-set statusline+=%*
-
-" ########################################
-
-" For neosnippet {{
-" Plugin key-mappings.
-imap <C-k>     <Plug>(neosnippet_expand_or_jump)
-smap <C-k>     <Plug>(neosnippet_expand_or_jump)
-xmap <C-k>     <Plug>(neosnippet_expand_target)
-
-" SuperTab like snippets behavior.
-imap <expr><TAB> neosnippet#expandable_or_jumpable() ?
-\ "\<Plug>(neosnippet_expand_or_jump)"
-\: pumvisible() ? "\<C-n>" : "\<TAB>"
-smap <expr><TAB> neosnippet#expandable_or_jumpable() ?
-\ "\<Plug>(neosnippet_expand_or_jump)"
-\: "\<TAB>"
-
-" For snippet_complete marker.
-if has('conceal')
-  set conceallevel=2 concealcursor=i
-endif
-" 個人用スニペット置き場
-" Enable snipMate compatibility feature.
-let g:neosnippet#enable_snipmate_compatibility = 1
-let g:neosnippet#snippets_directory='$HOME/.vim/bundle/vim-snippets'
-" }}
-
-" テンプレート設定
-autocmd BufNewFile *.pl 0r $HOME/.vim/template/perl-script.txt
-autocmd BufNewFile *.t  0r $HOME/.vim/template/perl-test.txt
-autocmd BufNewFile *.sh 0r $HOME/.vim/template/bash.txt
-
-" ########################################
-" For noecomplete {{
-"Note: This option must set it in .vimrc(_vimrc).  NOT IN .gvimrc(_gvimrc)!
-" Disable AutoComplPop.
-let g:acp_enableAtStartup = 0
-" Use neocomplete.
-let g:neocomplete#enable_at_startup = 1
-" Use smartcase.
-let g:neocomplete#enable_smart_case = 1
-" Set minimum syntax keyword length.
-let g:neocomplete#sources#syntax#min_keyword_length = 3
-let g:neocomplete#lock_buffer_name_pattern = '\*ku\*'
-
-" Define dictionary.
-let g:neocomplete#sources#dictionary#dictionaries = {
-    \ 'default' : '',
-    \ 'vimshell' : $HOME.'/.vimshell_hist',
-    \ 'scheme' : $HOME.'/.gosh_completions'
-        \ }
-
-" Define keyword.
-if !exists('g:neocomplete#keyword_patterns')
-    let g:neocomplete#keyword_patterns = {}
-endif
-let g:neocomplete#keyword_patterns['default'] = '\h\w*'
-
-" Plugin key-mappings.
-inoremap <expr><C-g>     neocomplete#undo_completion()
-inoremap <expr><C-l>     neocomplete#complete_common_string()
-
-" Recommended key-mappings.
-" <CR>: close popup and save indent.
-inoremap <silent> <CR> <C-r>=<SID>my_cr_function()<CR>
-function! s:my_cr_function()
-  return (pumvisible() ? "\<C-y>" : "" ) . "\<CR>"
-  " For no inserting <CR> key.
-  "return pumvisible() ? "\<C-y>" : "\<CR>"
-endfunction
-" <TAB>: completion.
-inoremap <expr><TAB>  pumvisible() ? "\<C-n>" : "\<TAB>"
-" <C-h>, <BS>: close popup and delete backword char.
-inoremap <expr><C-h> neocomplete#smart_close_popup()."\<C-h>"
-inoremap <expr><BS> neocomplete#smart_close_popup()."\<C-h>"
-" Close popup by <Space>.
-"inoremap <expr><Space> pumvisible() ? "\<C-y>" : "\<Space>"
-
-" メニューの一番目を自動選択
-"let g:neocomplete#enable_auto_select = 1
-
-" Shell like behavior(not recommended).
-"set completeopt+=longest
-"let g:neocomplete#enable_auto_select = 1
-"let g:neocomplete#disable_auto_complete = 1
-"inoremap <expr><TAB>  pumvisible() ? "\<Down>" : "\<C-x>\<C-u>"
-
-" Enable omni completion.
-autocmd FileType css setlocal omnifunc=csscomplete#CompleteCSS
-autocmd FileType html,markdown setlocal omnifunc=htmlcomplete#CompleteTags
-autocmd FileType javascript setlocal omnifunc=javascriptcomplete#CompleteJS
-autocmd FileType python setlocal omnifunc=pythoncomplete#Complete
-autocmd FileType xml setlocal omnifunc=xmlcomplete#CompleteTags
-autocmd FileType perl setlocal omnifunc=perlcomplete#CompleteTags
-
-" Enable heavy omni completion.
-if !exists('g:neocomplete#sources#omni#input_patterns')
-  let g:neocomplete#sources#omni#input_patterns = {}
-endif
-"let g:neocomplete#sources#omni#input_patterns.php = '[^. \t]->\h\w*\|\h\w*::'
-"let g:neocomplete#sources#omni#input_patterns.c = '[^.[:digit:] *\t]\%(\.\|->\)'
-"let g:neocomplete#sources#omni#input_patterns.cpp = '[^.[:digit:] *\t]\%(\.\|->\)\|\h\w*::'
-
-" For perlomni.vim setting.
-" https://github.com/c9s/perlomni.vim
-let g:neocomplete#sources#omni#input_patterns.perl = '\h\w*->\h\w*\|\h\w*::'
-"}}
-
-" その他の設定 #############################################
-
-" *.t *.psgi *.tt -> perl syntaxhighlight {{
-augroup filetypedetect
-autocmd! BufNewFile,BufRead *.t setf perl
-autocmd! BufNewFile,BufRead *.psgi setf perl
-autocmd! BufNewFile,BufRead *.tt setf tt2html
-augroup END
-" }}
-
-"" MarkDown {{
-" md as markdown, instead of modula2 {{
-autocmd BufNewFile,BufRead *.{md,mdwn,mkd,mkdn,mark*} set filetype=markdown
-"" }}
-" Disable highlight italic in Markdown {{
-autocmd FileType markdown hi! def link markdownItalic LineNr
-"" }}
-
-"" }}
-
-" fold by indent in yml
-autocmd BufNewFile,BufReadPost *{yml,.yml.liquid} setl foldmethod=indent nofoldenable
-
-" .yml is ansible
-autocmd BufNewFile,BufRead *.yml set filetype=yaml
-" .yml.liquid (Embulk)
-autocmd BufNewFile,BufRead *.liquid set filetype=yaml
-
-"ctag {{
-" 拡張子で読み込みタグを変更
-au BufNewFile,BufRead *.pl,*.pm,*.t set tags+=.git/perl.tags,${HOME}/perl.ctags
-
-" キーカーソル上の単語の定義元を新たなウィンドウで垂直に分割してジャンプ
-nnoremap <C-h> :vsp<CR> :exe("tjump ".expand('<cword>'))<CR>
-" キーカーソル上の単語の定義元を新たなウィンドウで水平に分割してジャンプ
-nnoremap <C-k> :split<CR> :exe("tjump ".expand('<cword>'))<CR>
-
-if has("cscope")
-    " cscopetagコマンド ':tags'、CTRL-]、そして 'vim -t' はデフォルトの:tagの代わりに、常に ':cstag'
-    " を使うようになる。事実上、tagファイル と同じようにcscopeデータベースを検索することができるようになるだろう。省略した場合はオフ
-    set nocst
-    "'csto' の値は|:cstag|が検索を実行する順序を決定する。'csto'が0に設定されているならば、
-    "先にcscopeデータベースが検索され、cscopeでは見つからなかった時にだけtagファイルが検索される。
-    "'csto'が1ならば、cscopeデータベースの前にtagsファイルが検索される。省略値は0
-    "set csto=1
-endif
-" }}
-
-" For auto-ctags {{
-let g:auto_ctags = 1
-let g:auto_ctags_directory_list = ['.git', '.svn']
-let g:auto_ctags_tags_args = '--tag-relative -R --fields=+KS --extra=+q'
-let g:auto_ctags_filetype_mode = 1
-" }}
-
-" For Syntastic ###################################
-" {{
-let g:syntastic_always_populate_loc_list = 1
-let g:syntastic_auto_loc_list = 1
-let g:syntastic_check_on_open = 1
-let g:syntastic_check_on_wq = 0
-
-let g:syntastic_enable_perl_checker = 1
-let g:syntastic_perl_checkers = ['perl', 'podchecker']
-
-let g:syntastic_yaml_yamlxs_exec = 1
-"}}
-
-
-" 配色関連 ##############################################
-" vimdiffの配色変更 {{
+" vimdiff の色調整（組み込み Diff ハイライト上書き）
 hi DiffAdd    ctermfg=black ctermbg=2
 hi DiffChange ctermfg=black ctermbg=3
 hi DiffDelete ctermfg=black ctermbg=6
 hi DiffText   ctermfg=black ctermbg=7
 
-" highlight DiffAdd    ctermfg=10 ctermbg=22
-" highlight DiffDelete ctermfg=10 ctermbg=52
-" highlight DiffChange ctermfg=10 ctermbg=17
-" highlight DiffText   ctermfg=10 ctermbg=21
-" }}
-
-" インデントの可視化用の配色設定 {{
-let g:indent_guides_enable_on_vim_startup=1
-let g:indent_guides_start_level=2
-let g:indent_guides_auto_colors=0
-autocmd VimEnter,Colorscheme * :hi IndentGuidesOdd  ctermbg=235
-autocmd VimEnter,Colorscheme * :hi IndentGuidesEven ctermbg=234
-let g:indent_guides_color_change_percent = 30
-let g:indent_guides_guide_size = 1
-" }}
-
-" キーバインド #########################################
-" For perltidy - Perlのコード整形 {{
-call system('which perltidy')
-if ! v:shell_error
-    " 実行コマンドTidyの定義
-    command -range=% -nargs=* Tidy <line1>,<line2>!perltidy -q
-
-    " Tidy実行前のカール位置を覚えておいて、Tidy実行後、そのカーソル位置に移動
-    fun DoTidy()
-        echo "Do Tidy"
-        let l = line(".")
-        let c = col(".")
-        :Tidy
-        call cursor(l, c)
-    endfun
-
-    " ビジュアルモードで選択して ,ptv と入力すると選択範囲だけ整形
-    map ,ptv <Esc>:'<,'>! perltidy<CR>
-    " ビジュアルモードで選択して ,pt と入力するとファイル全体に対してコード整形を実施
-    map ,pt <Esc>:call DoTidy()<CR>
-
-    " ファイル読み込み時及び保存時に実行
-    autocmd BufWritePost,FileReadPost *.p[lm],*.t :silent call DoTidy()
-
+"=========================================================
+" マウス・クリップボード
+"=========================================================
+if has('mouse')
+  set mouse=a      " すべてのモードでマウス有効
 endif
-" }}
-"
 
-" For neosnippet {{
-" Plugin key-mappings.
-imap <C-k>     <Plug>(neosnippet_expand_or_jump)
-smap <C-k>     <Plug>(neosnippet_expand_or_jump)
-xmap <C-k>     <Plug>(neosnippet_expand_target)
- 
-" SuperTab like snippets behavior.
-imap <expr><TAB> neosnippet#expandable_or_jumpable() ?
-\ "\<Plug>(neosnippet_expand_or_jump)"
-\: pumvisible() ? "\<C-n>" : "\<TAB>"
-smap <expr><TAB> neosnippet#expandable_or_jumpable() ?
-\ "\<Plug>(neosnippet_expand_or_jump)"
-\: "\<TAB>"
- 
-" For snippet_complete marker.
-if has('conceal')
-  set conceallevel=2 concealcursor=i
+" 端末クリップボードと連携（+clipboard ビルド前提）
+if has('clipboard')
+  set clipboard+=unnamedplus
 endif
-" 個人用スニペット置き場
-" Enable snipMate compatibility feature.
-let g:neosnippet#enable_snipmate_compatibility = 1
-let g:neosnippet#snippets_directory='~/.vim/snippets'
-" }}
 
-" テンプレート設定
-autocmd BufNewFile *.pl 0r $HOME/.vim/template/perl-script.txt
-autocmd BufNewFile *.t  0r $HOME/.vim/template/perl-test.txt
-autocmd BufNewFile *.sh 0r $HOME/.vim/template/bash.txt
-
-" ########################################
-" For noecomplete {{
-"Note: This option must set it in .vimrc(_vimrc).  NOT IN .gvimrc(_gvimrc)!
-" Disable AutoComplPop.
-let g:acp_enableAtStartup = 0
-" Use neocomplete.
-let g:neocomplete#enable_at_startup = 1
-" Use smartcase.
-let g:neocomplete#enable_smart_case = 1
-" Set minimum syntax keyword length.
-let g:neocomplete#sources#syntax#min_keyword_length = 3
-let g:neocomplete#lock_buffer_name_pattern = '\*ku\*'
-
-" Define dictionary.
-let g:neocomplete#sources#dictionary#dictionaries = {
-    \ 'default' : '',
-    \ 'vimshell' : $HOME.'/.vimshell_hist',
-    \ 'scheme' : $HOME.'/.gosh_completions'
-        \ }
-
-" Define keyword.
-if !exists('g:neocomplete#keyword_patterns')
-    let g:neocomplete#keyword_patterns = {}
+"=========================================================
+" grep
+"=========================================================
+if executable('jvgrep')
+  set grepprg=jvgrep
 endif
-let g:neocomplete#keyword_patterns['default'] = '\h\w*'
 
-" Plugin key-mappings.
-inoremap <expr><C-g>     neocomplete#undo_completion()
-inoremap <expr><C-l>     neocomplete#complete_common_string()
+"=========================================================
+" filetype / syntax
+"=========================================================
+filetype plugin indent on
+syntax enable
 
-" Recommended key-mappings.
-" <CR>: close popup and save indent.
-inoremap <silent> <CR> <C-r>=<SID>my_cr_function()<CR>
-function! s:my_cr_function()
-  return (pumvisible() ? "\<C-y>" : "" ) . "\<CR>"
-  " For no inserting <CR> key.
-  "return pumvisible() ? "\<C-y>" : "\<CR>"
-endfunction
-" <TAB>: completion.
-inoremap <expr><TAB>  pumvisible() ? "\<C-n>" : "\<TAB>"
-" <C-h>, <BS>: close popup and delete backword char.
-inoremap <expr><C-h> neocomplete#smart_close_popup()."\<C-h>"
-inoremap <expr><BS> neocomplete#smart_close_popup()."\<C-h>"
-" Close popup by <Space>.
-"inoremap <expr><Space> pumvisible() ? "\<C-y>" : "\<Space>"
+"=========================================================
+" Markdown / YAML などの filetype 調整
+"=========================================================
+augroup my_filetypes
+  autocmd!
+  " Markdown 拡張子を markdown として扱う
+  autocmd BufNewFile,BufRead *.{md,mdwn,mkd,mkdn,mark*} setlocal filetype=markdown
 
-" メニューの一番目を自動選択
-"let g:neocomplete#enable_auto_select = 1
+  " Markdown の italic 表示を LineNr と同じにして見やすく
+  autocmd FileType markdown highlight! default link markdownItalic LineNr
 
-" Shell like behavior(not recommended).
-"set completeopt+=longest
-"let g:neocomplete#enable_auto_select = 1
-"let g:neocomplete#disable_auto_complete = 1
-"inoremap <expr><TAB>  pumvisible() ? "\<Down>" : "\<C-x>\<C-u>"
-
-" Enable omni completion.
-autocmd FileType css setlocal omnifunc=csscomplete#CompleteCSS
-autocmd FileType html,markdown setlocal omnifunc=htmlcomplete#CompleteTags
-autocmd FileType javascript setlocal omnifunc=javascriptcomplete#CompleteJS
-autocmd FileType python setlocal omnifunc=pythoncomplete#Complete
-autocmd FileType xml setlocal omnifunc=xmlcomplete#CompleteTags
-autocmd FileType perl setlocal omnifunc=perlcomplete#CompleteTags
-
-" Enable heavy omni completion.
-if !exists('g:neocomplete#sources#omni#input_patterns')
-  let g:neocomplete#sources#omni#input_patterns = {}
-endif
-"let g:neocomplete#sources#omni#input_patterns.php = '[^. \t]->\h\w*\|\h\w*::'
-"let g:neocomplete#sources#omni#input_patterns.c = '[^.[:digit:] *\t]\%(\.\|->\)'
-"let g:neocomplete#sources#omni#input_patterns.cpp = '[^.[:digit:] *\t]\%(\.\|->\)\|\h\w*::'
-
-" For perlomni.vim setting.
-" https://github.com/c9s/perlomni.vim
-let g:neocomplete#sources#omni#input_patterns.perl = '\h\w*->\h\w*\|\h\w*::'
-"}}
-
-" その他の設定 #############################################
-
-" *.t *.psgi *.tt -> perl syntaxhighlight {{
-augroup filetypedetect
-autocmd! BufNewFile,BufRead *.t setf perl
-autocmd! BufNewFile,BufRead *.psgi setf perl
-autocmd! BufNewFile,BufRead *.tt setf tt2html
+  " YAML 系はインデントで fold 可能に（デフォルトでは fold 無効）
+  autocmd BufNewFile,BufReadPost *.{yml,yaml,yml.liquid} setlocal foldmethod=indent nofoldenable
 augroup END
-" }}
 
-"" MarkDown {{
-" md as markdown, instead of modula2 {{
-autocmd BufNewFile,BufRead *.{md,mdwn,mkd,mkdn,mark*} set filetype=markdown
-"" }}
-" Disable highlight italic in Markdown {{
-autocmd FileType markdown hi! def link markdownItalic LineNr
-"" }}
+"=========================================================
+" キーマップ (Leader キーなど)
+"=========================================================
+let mapleader = " "         " <Space> を Leader に
 
-"" }}
+" --- NERDTree ---
+nnoremap <leader>e :NERDTreeToggle<CR>
 
-" fold by indent in yml
-autocmd BufNewFile,BufReadPost *{yml,.yml.liquid} setl foldmethod=indent nofoldenable
+" --- FZF (ファイル/バッファ検索) ---
+nnoremap <leader>ff :Files<CR>        " カレントディレクトリからファイル検索
+nnoremap <leader>fg :GFiles<CR>       " Git 管理ファイルから検索
+nnoremap <leader>fb :Buffers<CR>      " 開いているバッファから検索
+nnoremap <leader>fh :History<CR>      " 最近開いたファイルから検索
 
-" .yml is ansible
-autocmd BufNewFile,BufRead *.yml set filetype=yaml
-" .yml.liquid (Embulk)
-autocmd BufNewFile,BufRead *.liquid set filetype=yaml
+" --- Git (vim-fugitive) ---
+nnoremap <leader>gs :Git<CR>
+nnoremap <leader>gd :Gdiffsplit<CR>
+nnoremap <leader>gb :Git blame<CR>
 
-"ctag {{
-" 拡張子で読み込みタグを変更
-au BufNewFile,BufRead *.pl,*.pm,*.t set tags+=.git/perl.tags,${HOME}/perl.ctags
+" --- コメントトグル (vim-commentary) ---
+nnoremap <leader>/ :Commentary<CR>
+xnoremap <leader>/ :Commentary<CR>
 
-" キーカーソル上の単語の定義元を新たなウィンドウで垂直に分割してジャンプ
-nnoremap <C-h> :vsp<CR> :exe("tjump ".expand('<cword>'))<CR>
-" キーカーソル上の単語の定義元を新たなウィンドウで水平に分割してジャンプ
-nnoremap <C-k> :split<CR> :exe("tjump ".expand('<cword>'))<CR>
+"=========================================================
+" ALE (Lint / LSP / フォーマット)
+"=========================================================
+" サインの表示 (左端の列)
+let g:ale_sign_error   = 'E'
+let g:ale_sign_warning = 'W'
+let g:ale_sign_column_always = 1
 
-if has("cscope")
-    " cscopetagコマンド ':tags'、CTRL-]、そして 'vim -t' はデフォルトの:tagの代わりに、常に ':cstag'
-    " を使うようになる。事実上、tagファイル と同じようにcscopeデータベースを検索することができるようになるだろう。省略した場合はオフ
-    set nocst
-    "'csto' の値は|:cstag|が検索を実行する順序を決定する。'csto'が0に設定されているならば、
-    "先にcscopeデータベースが検索され、cscopeでは見つからなかった時にだけtagファイルが検索される。
-    "'csto'が1ならば、cscopeデータベースの前にtagsファイルが検索される。省略値は0
-    "set csto=1
-endif
-" }}
+" いつ Lint するか
+let g:ale_lint_on_text_changed = 'never'
+let g:ale_lint_on_insert_leave = 1
+let g:ale_lint_on_save         = 1
 
-" For auto-ctags {{
-let g:auto_ctags = 1
-let g:auto_ctags_directory_list = ['.git', '.svn']
-let g:auto_ctags_tags_args = '--tag-relative -R --fields=+KS --extra=+q'
-let g:auto_ctags_filetype_mode = 1
-" }}
+" 保存時に最低限の整形だけ実行 (外部コマンド不要)
+let g:ale_fix_on_save = 1
+let g:ale_fixers = {
+\   '*': ['remove_trailing_lines', 'trim_whitespace'],
+\}
 
-" For Syntastic ###################################
-" {{
-let g:syntastic_always_populate_loc_list = 1
-let g:syntastic_auto_loc_list = 1
-let g:syntastic_check_on_open = 1
-let g:syntastic_check_on_wq = 0
+" ALE による補完を有効化 (LSP サーバが入っていれば補完も効く)
+let g:ale_completion_enabled = 1
+set completeopt=menu,menuone,noselect
 
-let g:syntastic_enable_perl_checker = 1
-let g:syntastic_perl_checkers = ['perl', 'podchecker']
+" ALE 用キーマップ
+nnoremap <leader>al :ALELint<CR>
+nnoremap <leader>an :ALENextWrap<CR>
+nnoremap <leader>ap :ALEPreviousWrap<CR>
+nnoremap <leader>ad :ALEDetail<CR>
 
-let g:syntastic_yaml_yamlxs_exec = 1
-"}}
+" LSP 対応コマンド (対応サーバがあるときだけ有効に使える)
+nnoremap <leader>hh :ALEHover<CR>
+nnoremap <leader>rr :ALERename<CR>
+nnoremap <leader>jd :ALEGoToDefinition<CR>
+nnoremap <leader>jr :ALEFindReferences<CR>
 
+"=========================================================
+" Go 向け (vim-go)
+"=========================================================
+" 自動 gofmt/goimports は ALE や他のツールと競合しやすいので一旦 OFF
+let g:go_fmt_autosave       = 0
+let g:go_imports_autosave   = 0
+let g:go_def_mapping_enabled = 0   " デフォルトの gd マッピングを潰さない
+
+" よく使う Go コマンドのショートカット
+augroup go_mappings
+  autocmd!
+  autocmd FileType go nnoremap <buffer> <leader>gt :GoTest<CR>
+  autocmd FileType go nnoremap <buffer> <leader>gi :GoImport<CR>
+  autocmd FileType go nnoremap <buffer> <leader>gf :GoFmt<CR>
+augroup END
+
+"=========================================================
+" Markdown 向け (vim-markdown + tabular)
+"=========================================================
+" 折り畳みや自動リンクは好みに応じて必要最小限に
+let g:vim_markdown_folding_disabled = 1
+let g:vim_markdown_conceal = 0
+
+" Markdown テーブル整形（vim-markdown 経由で Tabular を呼ぶ）
+augroup markdown_mappings
+  autocmd!
+  autocmd FileType markdown nnoremap <buffer> <leader>ta :TableFormat<CR>
+augroup END
