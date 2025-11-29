@@ -1,16 +1,5 @@
 yassan's dotfiles
 ==================
 
-## make list
-
-show dot files in this repo
-
-## make deploy
-
-Create symlink to home dir
-
-## make init
-
-Set up env settings
-
-
+.vimrc-server ： 通常版（サーバ作業用。プラグイン有り）
+.vimrc-mini   ： 最小限（プラグイン無し）
