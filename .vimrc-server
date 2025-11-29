@@ -59,7 +59,7 @@ set ambiwidth=double
 " 表示・操作性
 "=========================================================
 " 行番号
-set number
+" set number
 
 " ステータスラインを常時表示
 set laststatus=2
